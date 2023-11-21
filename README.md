@@ -37,7 +37,33 @@ protected $routeMiddleware = [
 
 #### 步骤3：中间件接入
 ```php
+public function handle($request, Closure $next)
+{
+    $appKey = $request->header('AppKey');
+    $authToken = $request->header('Authorization');
+    
+    if(!$appKey || !$authToken) {
+        return response()->json(['message' => 'AppKey or Authorization not found'], 400);
+    }
 
+    try {
+        (new AuthApi($appKey, $authToken))->verify();
+    } catch (ErrCodeException $e) {
+        // TODO 业务错误
+        $code = $e->getCode();
+        $message = $e->getMessage();
+        // 根据不同的错误信息，进行不同的业务处理
+        return response()->json(['message' => $message]);
+    } catch (ValidationException|TokenInvalidException $e) {
+        // TODO 签名认证失败
+        $code = $e->getCode();
+        $message = $e->getMessage();
+        // 签名验证失败，可以进行统一返回处理
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    return $next($request);
+}
 ```
 
 #### 步骤4：路由中接入中间件
@@ -56,7 +82,7 @@ Route::middleware('api.sys.auth')->group(function () {
 ```
 
 ## 使用指南
-请参阅我们的完整[文档](docs)以了解如何使用此库、添加新服务类、处理状态和错误等更多详细信息。
+请参阅我们的完整[文档](docs)以了解如何使用此库等更多详细信息。
 
 ## 版权和许可
 本项目基于 [GPL-3.0] 许可证。请查阅 LICENSE 文件以获取更多信息。
