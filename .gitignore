@@ -1,0 +1,13 @@
+# Edit Dir
+.idea
+.project
+.DS_Store
+.vscode
+.fleet
+
+# Project
+vendor
+.env*
+.phpunit.*
+tests/codeCoverage
+false
