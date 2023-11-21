@@ -81,7 +81,7 @@ class JWTHandler {
      * @return void
      * @throws TokenInvalidException
      */
-    private function verifyTokenExpire($appKey, $signature, $exp)
+    private function verifyTokenExpire($appKey, $signature, $exp): void
     {
         $cache = BaseCache::getInstance();
 
