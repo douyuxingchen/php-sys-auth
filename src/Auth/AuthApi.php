@@ -11,59 +11,49 @@ use Douyuxingchen\PhpSysAuth\Services\AppService;
 use Douyuxingchen\PhpSysAuth\Services\IPService;
 use Douyuxingchen\PhpSysAuth\Services\JWTHandler;
 use Douyuxingchen\PhpSysAuth\Services\RateLimiterService;
+use Illuminate\Support\Facades\Config;
 
 class AuthApi
 {
     private $appKey;
     private $token;
 
-    private $isIPLimit = true;
-    private $isApiRate = true;
-    private $isRouteLimit = true;
+    private $isIPLimit;
+    private $isApiRate;
+    private $isRouteLimit;
 
     /**
      * @param string $appKey 应用key
-     * @param string $token 请求token
      */
-    public function __construct(string $appKey, string $token) {
+    public function __construct(string $appKey) {
         $this->appKey = $appKey;
-        $this->token = $token;
+
+        $this->isIPLimit = Config::get('sys_auth.ip_limit');
+        $this->isApiRate = Config::get('sys_auth.api_rate');
+        $this->isRouteLimit = Config::get('sys_auth.route_limit');
     }
 
     /**
-     * 自定义IP限流开关
-     *
-     * @param bool $status
+     * @param string $token 请求token
      * @return $this
      */
-    public function setIsIPLimit(bool $status): AuthApi
+    public function setToken(string $token) : AuthApi
     {
-        $this->isIPLimit = $status;
+        $this->token = $token;
         return $this;
     }
 
     /**
-     * 自定义接口限流开关
+     * 清理缓存
      *
-     * @param bool $status
-     * @return $this
+     * @return array
      */
-    public function setIsApiRate(bool $status): AuthApi
+    public function flushCache()
     {
-        $this->isApiRate = $status;
-         return $this;
-    }
-
-    /**
-     * 自定义路由白名单开关
-     *
-     * @param bool $status
-     * @return $this
-     */
-    public function setIsRouteLimit(bool $status): AuthApi
-    {
-        $this->isRouteLimit = $status;
-         return $this;
+        return [
+            (new AppService())->delCache($this->appKey),
+            (new AppRouteService())->delCache($this->appKey),
+        ];
     }
 
     /**

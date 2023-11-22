@@ -26,7 +26,7 @@ CREATE TABLE `sys_auth_api` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Auth路由列表';
 
 CREATE TABLE `sys_auth_app_route` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `app_id` int unsigned NOT NULL DEFAULT '0' COMMENT '应用ID',
   `api_id` int unsigned NOT NULL DEFAULT '0' COMMENT '路由ID',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -36,7 +36,7 @@ CREATE TABLE `sys_auth_app_route` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Auth应用路由关联表';
 
 CREATE TABLE `sys_auth_system` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `key` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '系统标识',
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '系统名称',
   `domain` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '系统域名',

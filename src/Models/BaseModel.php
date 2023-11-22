@@ -4,25 +4,14 @@ namespace Douyuxingchen\PhpSysAuth\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Support\Facades\Config;
 
 class BaseModel extends Model
 {
-    protected $connection = 'custom_connection'; // 设置默认连接
-
-    public function getConnectionName()
+    public function __construct(array $attributes = [])
     {
-        return $this->connection;
-    }
-
-//    public function __construct(ConnectionInterface $connection)
-//    {
-//        parent::__construct();
-//        $this->connectionInstance = $connection;
-//    }
-
-    public function __construct($connection)
-    {
-        parent::__construct();
-        $this->connection = $connection;
+        parent::__construct($attributes);
+        $connection = Config::get('sys_auth.mysql_connect_name');
+        $this->setConnection($connection);
     }
 }

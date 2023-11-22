@@ -47,7 +47,7 @@ public function handle($request, Closure $next)
     }
 
     try {
-        (new AuthApi($appKey, $authToken))->verify();
+        (new AuthApi($appKey))->setToken($authToken)->verify();
     } catch (ErrCodeException $e) {
         // TODO 业务错误
         $code = $e->getCode();

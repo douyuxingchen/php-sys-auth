@@ -21,7 +21,7 @@ class AppService
             return $this;
         }
 
-        $sysAuthApp = new SysAuthApp('xx');
+        $sysAuthApp = new SysAuthApp();
         $data = $sysAuthApp->query()->where('app_key', $appKey)->first();
         if(empty($data)) {
             throw new ValidationException('AppKey not present or invalid', ErrCodeEnums::ERR_APP_KEY_EMPTY);

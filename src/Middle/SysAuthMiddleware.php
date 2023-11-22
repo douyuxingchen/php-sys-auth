@@ -21,7 +21,7 @@ class SysAuthMiddleware extends Middleware
         $authToken = $request->header('Authorization');
 
         try {
-            (new AuthApi($appKey, $authToken))->verify();
+            (new AuthApi($appKey))->setToken($authToken)->verify();
         } catch (ErrCodeException $e) {
             // TODO 业务错误
             $code = $e->getCode();

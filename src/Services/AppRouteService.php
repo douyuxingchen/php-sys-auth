@@ -16,12 +16,12 @@ class AppRouteService
             return json_decode($cache->get(self::cacheKey($appKey)), true);
         }
 
-        $apiIds = (new SysAuthAppRoute('xx'))->query()
+        $apiIds = (new SysAuthAppRoute())->query()
             ->select('api_id')
             ->where('app_id', $appID)
             ->pluck('api_id')
             ->toArray();
-        $routes = (new SysAuthApi('xxx'))->query()
+        $routes = (new SysAuthApi())->query()
             ->select('route')
             ->whereIn('id', $apiIds)
             ->pluck('route')
