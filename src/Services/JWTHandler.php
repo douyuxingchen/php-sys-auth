@@ -104,7 +104,7 @@ class JWTHandler {
         throw new TokenInvalidException('Token verification failed', ErrCodeEnums::ERR_TOKEN_FAILED);
     }
 
-    private function base64UrlEncode($data): bool|string
+    private function base64UrlEncode($data)
     {
         $b64 = base64_encode($data);
         if ($b64 === false) {
@@ -114,7 +114,7 @@ class JWTHandler {
         return rtrim($url, '=');
     }
 
-    private function base64UrlDecode($data): bool|string
+    private function base64UrlDecode($data)
     {
         $b64 = strtr($data, '-_', '+/');
         $decoded = base64_decode($b64, true);

@@ -35,5 +35,6 @@ class ErrCodeEnums
     const ERR_IP_WHITE = 20006; // 在IP白名单模式下，该IP被拦截
     const ERR_URI_UNAUTHORIZED = 20010; // 您请求的接口未被授权
     const ERR_REQUEST_FREQUENTLY = 20015; // 请求过于频繁
+    const ERR_CONF_FAILED = 20020; // 配置文件配置错误
 
 }

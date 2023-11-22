@@ -4,8 +4,11 @@ namespace Douyuxingchen\PhpSysAuth\Services;
 use Douyuxingchen\PhpSysAuth\Caches\BaseCache;
 use Douyuxingchen\PhpSysAuth\Enums\ErrCodeEnums;
 use Douyuxingchen\PhpSysAuth\Exceptions\ErrCodeException;
+use RedisException;
 
 class RateLimiterService {
+
+    const RateType = ['counter', 'window', 'bucket'];
 
     private $limitNumber;
     private $cache;
@@ -16,59 +19,114 @@ class RateLimiterService {
         $this->cache = BaseCache::getInstance();
     }
 
-    /**
-     * @throws ErrCodeException
-     */
-    public function throttle($appKey)
-    {
-        // 如果是0则不限制请求频率
-        if($this->limitNumber == 0) {
-            return;
+    public function counter($appKey) {
+        $key = 'limit:counter:' . $appKey;
+        $currentCount = $this->cache->incr($key);
+        if ($currentCount > $this->limitNumber) {
+            throw new ErrCodeException('Request too frequently', ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
         }
-
-        $key = 'throttle:' . $appKey;
-        $lastRequestTime = $this->cache->get($key);
-
-        if (!$lastRequestTime) {
-            $this->cache->set($key, time(), 'EX', 1);
-        } else {
-            $timeDifference = time() - $lastRequestTime;
-            $interval = 1 / $this->limitNumber;
-            if ($timeDifference < $interval) {
-                throw new ErrCodeException('Request too frequently', ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
-            } else {
-                $this->cache->set($key, time(), 'EX', 1);
-            }
-        }
+        $this->cache->expire($key, 1);
     }
 
-    /**
-     * @throws ErrCodeException
-     */
-    public function throttle2($appKey)
+    public function window($appKey)
     {
-        if ($this->limitNumber == 0) {
-            return;
-        }
+        $nowTime = time();
+        $startTime = $nowTime - 1;
+        $zSetKey = 'limit:window:' . $appKey;
+        $requestHistory = $this->cache->zRangeByScore($zSetKey, $startTime, $nowTime);
+        $count = count($requestHistory);
 
-        $key = 'throttle:' . $appKey;
-        $requestTimes = $this->cache->get($key);
-
-        if (!$requestTimes) {
-            $requestTimes = [];
-        }
-
-        $currentTime = time();
-        $requestTimes = array_filter($requestTimes, function ($time) use ($currentTime) {
-            return $currentTime - $time < 1; // 限制在1秒内的请求记录
-        });
-
-        if (count($requestTimes) >= $this->limitNumber) {
+        if ($count >= $this->limitNumber) {
             throw new ErrCodeException('Request too frequently', ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
         }
 
-        $requestTimes[] = $currentTime;
-        $this->cache->set($key, $requestTimes);
+        $value = $appKey . ':' . $nowTime . uniqid();
+        $this->cache->zAdd($zSetKey, $nowTime, $value);
+        $this->cache->expire($zSetKey, 1);
     }
+
+    public function bucket($appKey) {
+        $key = 'limit:bucket:' . $appKey;
+        $currentTokens = $this->cache->lLen($key);
+        if ($currentTokens >= $this->limitNumber) {
+            throw new ErrCodeException('Request too frequently', ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
+        }
+        $this->cache->rPush($key, time()); // 添加令牌
+        $this->cache->expire($key, 1);
+    }
+
+    public function counterEval($appKey) {
+        $key = 'limit:counterEval:' . $appKey;
+        $luaScript = "
+            local currentCount = redis.call('INCR', KEYS[1])
+            if tonumber(currentCount) > tonumber(ARGV[1]) then
+                return redis.error_reply('Request too frequently')
+            end
+            redis.call('EXPIRE', KEYS[1], 1)
+            return currentCount
+        ";
+
+        try{
+            $this->cache->eval($luaScript, 1, $key, $this->limitNumber);
+        }catch (RedisException $e){
+            throw new ErrCodeException($e->getMessage(), ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
+        }
+    }
+
+
+    public function windowEval($appKey)
+    {
+        $luaScript = "
+            local zSetKey = KEYS[1]
+            local cacheVal = ARGV[1]
+            local limit = tonumber(ARGV[2])
+            local startTime = ARGV[3]
+            local nowTime = ARGV[4]
+    
+            local requestHistory = redis.call('ZRANGEBYSCORE', zSetKey, startTime, nowTime)
+            local count = table.getn(requestHistory)
+    
+            if count >= limit then
+                return -1
+            else
+                redis.call('ZADD', zSetKey, nowTime, cacheVal)
+                redis.call('EXPIRE', zSetKey, 1)
+                return count
+            end
+        ";
+
+        $nowTime = time();
+        $startTime = $nowTime - 1;
+        $zSetKey = 'limit:windowEval:' . $appKey;
+        $value = $appKey . ':' . $nowTime . uniqid();
+
+        $result =  $this->cache->eval($luaScript, 1, $zSetKey, $value, $this->limitNumber,
+            $startTime, $nowTime
+        );
+
+        if ($result === -1) {
+            throw new ErrCodeException('Request too frequently', ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
+        }
+    }
+
+    public function bucketEval($appKey) {
+        $key = 'limit:bucketEval:' . $appKey;
+        $luaScript = "
+            local currentTokens = redis.call('LLEN', KEYS[1])
+            if tonumber(currentTokens) >= tonumber(ARGV[1]) then
+                return redis.error_reply('Request too frequently')
+            end
+            redis.call('RPUSH', KEYS[1], ARGV[2])
+            redis.call('EXPIRE', KEYS[1], 1)
+            return currentTokens
+        ";
+
+        try{
+            $this->cache->eval($luaScript, 1, $key, $this->limitNumber, time());
+        }catch (RedisException $e){
+            throw new ErrCodeException($e->getMessage(), ErrCodeEnums::ERR_REQUEST_FREQUENTLY);
+        }
+    }
+
 
 }

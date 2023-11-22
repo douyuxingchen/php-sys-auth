@@ -20,12 +20,28 @@ composer update "douyuxingchen/php-sys-auth" --ignore-platform-reqs
 
 ### Laravel框架快速接入
 
-#### 步骤1：创建中间件
+#### 步骤1：注册服务提供者
+在 config/app.php 文件中的 providers 数组中注册你的服务提供者。
+```php
+'providers' => [
+  // 其他服务提供者...
+  Douyuxingchen\PhpSysAuth\ConfigProvider::class,
+],
+```
+
+#### 步骤2：生成配置文件
+运行以下命令生成配置文件
+```bash
+php artisan vendor:publish --provider="Douyuxingchen\PhpSysAuth\ConfigProvider"
+```
+用户需要在每次更新包的时候都要覆盖资源，你可以使用 --force 标志。
+
+#### 步骤3：创建中间件
 ```bash
 php artisan make:middleware SysAuthMiddleware
 ```
 
-#### 步骤2：注册中间件
+#### 步骤4：注册中间件
 
 在 `app/Http/Kernel.php` 文件的 `$routeMiddleware` 数组中，注册中间件：
 
@@ -35,7 +51,7 @@ protected $routeMiddleware = [
 ];
 ```
 
-#### 步骤3：中间件接入
+#### 步骤5：中间件接入
 ```php
 public function handle($request, Closure $next)
 {
@@ -66,7 +82,7 @@ public function handle($request, Closure $next)
 }
 ```
 
-#### 步骤4：路由中接入中间件
+#### 步骤6：路由中接入中间件
 路由组允许你共享路由属性，例如中间件，这样不需要在每个单独的路由上定义那些属性。
 ```php
 <?php
