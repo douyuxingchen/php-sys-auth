@@ -17,12 +17,58 @@ class AuthApi
     private $appKey;
     private $token;
 
+    private $isIPLimit = true;
+    private $isApiRate = true;
+    private $isRouteLimit = true;
+
+    /**
+     * @param string $appKey 应用key
+     * @param string $token 请求token
+     */
     public function __construct(string $appKey, string $token) {
         $this->appKey = $appKey;
         $this->token = $token;
     }
 
     /**
+     * 自定义IP限流开关
+     *
+     * @param bool $status
+     * @return $this
+     */
+    public function setIsIPLimit(bool $status): AuthApi
+    {
+        $this->isIPLimit = $status;
+        return $this;
+    }
+
+    /**
+     * 自定义接口限流开关
+     *
+     * @param bool $status
+     * @return $this
+     */
+    public function setIsApiRate(bool $status): AuthApi
+    {
+        $this->isApiRate = $status;
+         return $this;
+    }
+
+    /**
+     * 自定义路由白名单开关
+     *
+     * @param bool $status
+     * @return $this
+     */
+    public function setIsRouteLimit(bool $status): AuthApi
+    {
+        $this->isRouteLimit = $status;
+         return $this;
+    }
+
+    /**
+     * 接口安全验证器
+     *
      * @return void
      * @throws TokenInvalidException
      * @throws ValidationException
@@ -51,6 +97,10 @@ class AuthApi
      */
     private function IPLimit(AppService $app)
     {
+        if(!$this->isIPLimit) {
+            return;
+        }
+
         $ip = IPService::getClientIP();
 
         // 白名单模式
@@ -60,9 +110,12 @@ class AuthApi
                 throw new ErrCodeException('In IP whitelist mode, the IP is blocked', ErrCodeEnums::ERR_IP_WHITE);
             }
 
-            if(!in_array($ip, $ipList)) {
-                throw new ErrCodeException('In IP whitelist mode, the IP is blocked', ErrCodeEnums::ERR_IP_WHITE);
+            foreach ($ipList as $confIP) {
+                if(IPService::validateIP($ip, $confIP)) {
+                    return;
+                }
             }
+            throw new ErrCodeException('In IP whitelist mode, the IP is blocked', ErrCodeEnums::ERR_IP_WHITE);
         }
 
         // 黑名单模式
@@ -71,10 +124,11 @@ class AuthApi
             if(empty($ipList)) {
                 return;
             }
-            if(!in_array($ip, $ipList)) {
-                return;
+            foreach ($ipList as $confIP) {
+                if(IPService::validateIP($ip, $confIP)) {
+                    throw new ErrCodeException('In IP blacklist mode, the IP is blocked', ErrCodeEnums::ERR_IP_BLACK);
+                }
             }
-            throw new ErrCodeException('In IP blacklist mode, the IP is blocked', ErrCodeEnums::ERR_IP_BLACK);
         }
     }
 
@@ -85,6 +139,10 @@ class AuthApi
      */
     private function ApiRate(AppService $app)
     {
+        if(!$this->isApiRate) {
+            return;
+        }
+
         (new RateLimiterService($app->getApiLimit()))->throttle($app->getAppKey());
     }
 
@@ -93,6 +151,10 @@ class AuthApi
      */
     private function RouteLimit(AppService $app, $exp)
     {
+        if(!$this->isRouteLimit) {
+            return;
+        }
+
         $uri = request()->route()->uri;
         $route = (new AppRouteService())->getRouteList($app->getAppID(), $app->getAppKey(), $exp);
         if(!in_array(strtolower($uri), $route)) {

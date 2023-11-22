@@ -11,8 +11,8 @@ class ErrCodeEnums
      * Token类
      * 此类错误码一律是签名校验失败，业务方需要进行签名验证失败的反馈处理
      *
-     * @see ValidationException
-     * @see TokenInvalidException
+     * @see ValidationException 签名参数不完整或错误
+     * @see TokenInvalidException 签名认证失败
      */
     const ERR_TOKEN_DELETION = 10000; // Token信息不完整
     const ERR_TOKEN_FAILED = 10001; // Token校验失败

@@ -4,7 +4,6 @@ namespace Douyuxingchen\PhpSysAuth\Auth;
 
 class AuthKey
 {
-
     /**
      * 生成应用Key
      *

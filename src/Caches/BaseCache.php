@@ -13,7 +13,8 @@ class BaseCache
          $this->redis = Redis::connection();
     }
 
-    public static function getInstance() {
+    public static function getInstance(): BaseCache
+    {
         if (!isset(self::$instance)) {
             self::$instance = new self();
         }
@@ -77,7 +78,7 @@ class BaseCache
      */
     public function del(string $key) : int
     {
-        return $this->redis->del($key);
+        return (int)$this->redis->del($key);
     }
 
     /**
@@ -88,7 +89,7 @@ class BaseCache
      */
     public function getTtl(string $key) : int
     {
-        return $this->redis->ttl($key);
+        return (int)$this->redis->ttl($key);
     }
 
 }
