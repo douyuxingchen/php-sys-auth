@@ -1,6 +1,7 @@
 <?php
 namespace Douyuxingchen\PhpSysAuth\Caches;
 
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Redis;
 
 class BaseCache
@@ -10,7 +11,8 @@ class BaseCache
     private $redis;
 
     private function __construct() {
-         $this->redis = Redis::connection();
+        $connect = Config::get('sys_auth.redis_connect_name');
+        $this->redis = Redis::connection($connect);
     }
 
     public static function getInstance(): BaseCache
