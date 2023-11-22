@@ -64,6 +64,11 @@ public function handle($request, Closure $next)
 
     try {
         (new AuthApi($appKey))->setToken($authToken)->verify();
+    } catch (ConfigException $e){
+        // TODO 配置文件错误
+        $code = $e->getCode();
+        $message = $e->getMessage();
+        return response()->json('Config error', 500);
     } catch (ErrCodeException $e) {
         // TODO 业务错误
         $code = $e->getCode();
