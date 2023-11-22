@@ -1,6 +1,7 @@
 <?php
 namespace Douyuxingchen\PhpSysAuth\Enums;
 
+use Douyuxingchen\PhpSysAuth\Exceptions\ConfigException;
 use Douyuxingchen\PhpSysAuth\Exceptions\ErrCodeException;
 use Douyuxingchen\PhpSysAuth\Exceptions\TokenInvalidException;
 use Douyuxingchen\PhpSysAuth\Exceptions\ValidationException;
@@ -35,6 +36,13 @@ class ErrCodeEnums
     const ERR_IP_WHITE = 20006; // 在IP白名单模式下，该IP被拦截
     const ERR_URI_UNAUTHORIZED = 20010; // 您请求的接口未被授权
     const ERR_REQUEST_FREQUENTLY = 20015; // 请求过于频繁
-    const ERR_CONF_FAILED = 20020; // 配置文件配置错误
+
+    /**
+     * 配置文件
+     * 此类的错误通常是该包的应用方，配置了错误的配置文件导致的，需要使用此SDK开发者自行处理
+     *
+     * @see ConfigException
+     */
+    const ERR_CONF_FAILED = 30000; // 配置文件配置错误
 
 }

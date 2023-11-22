@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package exceptions;
+option go_package="./exceptions";
+
+message Request {
+  string ping = 1;
+}
+
+message Response {
+  string pong = 1;
+}
+
+service Exceptions {
+  rpc Ping(Request) returns(Response);
+}

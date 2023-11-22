@@ -2,6 +2,7 @@
 namespace Douyuxingchen\PhpSysAuth\Auth;
 
 use Douyuxingchen\PhpSysAuth\Enums\ErrCodeEnums;
+use Douyuxingchen\PhpSysAuth\Exceptions\ConfigException;
 use Douyuxingchen\PhpSysAuth\Exceptions\ErrCodeException;
 use Douyuxingchen\PhpSysAuth\Exceptions\TokenInvalidException;
 use Douyuxingchen\PhpSysAuth\Exceptions\ValidationException;
@@ -55,6 +56,7 @@ class AuthApi
      * @throws TokenInvalidException
      * @throws ValidationException
      * @throws ErrCodeException
+     * @throws ConfigException
      */
     public function verify()
     {
@@ -122,7 +124,7 @@ class AuthApi
     }
 
     /**
-     * @throws ErrCodeException
+     * @throws ErrCodeException|ConfigException
      */
     private function ApiRate(AppService $app)
     {
@@ -136,7 +138,7 @@ class AuthApi
 
         // 配置文件错误
         if(!in_array($rateType, RateLimiterService::RateType)) {
-            throw new ErrCodeException('Error in configuration file [sys_auth.api_rate.rate_type]',
+            throw new ConfigException('Error in configuration file [sys_auth.api_rate.rate_type]',
                 ErrCodeEnums::ERR_CONF_FAILED);
         }
 
@@ -146,7 +148,7 @@ class AuthApi
         }
 
         if(!method_exists(RateLimiterService::class, $method)) {
-            throw new ErrCodeException('Error in configuration file [sys_auth.api_rate]',
+            throw new ConfigException('Error in configuration file [sys_auth.api_rate]',
                 ErrCodeEnums::ERR_CONF_FAILED);
         }
 
