@@ -96,7 +96,7 @@ class AuthApi
         if($app->getIpLimitType() == SysAuthApp::IP_WHITE) {
             $ipList = explode(',', $app->getIpWhiteList());
             if(empty($ipList)) {
-                throw new ErrCodeException('In IP whitelist mode, the IP is blocked', ErrCodeEnums::ERR_IP_WHITE);
+                throw new ErrCodeException(sprintf('In IP whitelist mode, the IP is blocked [%s]', $ip), ErrCodeEnums::ERR_IP_WHITE);
             }
 
             foreach ($ipList as $confIP) {
@@ -104,7 +104,7 @@ class AuthApi
                     return;
                 }
             }
-            throw new ErrCodeException('In IP whitelist mode, the IP is blocked', ErrCodeEnums::ERR_IP_WHITE);
+            throw new ErrCodeException(sprintf('In IP whitelist mode, the IP is blocked [%s]', $ip), ErrCodeEnums::ERR_IP_WHITE);
         }
 
         // 黑名单模式
@@ -115,7 +115,7 @@ class AuthApi
             }
             foreach ($ipList as $confIP) {
                 if(IPService::validateIP($ip, $confIP)) {
-                    throw new ErrCodeException('In IP blacklist mode, the IP is blocked', ErrCodeEnums::ERR_IP_BLACK);
+                    throw new ErrCodeException(sprintf('In IP blacklist mode, the IP is blocked [%s]', $ip), ErrCodeEnums::ERR_IP_BLACK);
                 }
             }
         }
@@ -172,7 +172,7 @@ class AuthApi
 
         $route = (new AppRouteService())->getRouteList($app->getAppID(), $app->getAppKey(), $exp);
         if(!in_array(strtolower($uri), $route)) {
-            throw new ErrCodeException('The interface you requested is not authorized', ErrCodeEnums::ERR_URI_UNAUTHORIZED);
+            throw new ErrCodeException(sprintf('The interface you requested is not authorized [%s]', $uri), ErrCodeEnums::ERR_URI_UNAUTHORIZED);
         }
     }
 }
