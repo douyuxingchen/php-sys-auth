@@ -1,6 +1,6 @@
 {
     "name": "douyuxingchen/php-sys-auth",
-    "description": "PHP外部系统授权签名验证库。",
+    "description": "PHP外部系统授权签名验证库，帮助您保护您的应用程序免受未经授权的访问。",
     "type": "library",
     "license": "GPL-3.0-only",
     "autoload": {
