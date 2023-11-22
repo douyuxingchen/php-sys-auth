@@ -18,19 +18,11 @@ class AuthApi
     private $appKey;
     private $token;
 
-    private $isIPLimit;
-    private $isApiRate;
-    private $isRouteLimit;
-
     /**
      * @param string $appKey 应用key
      */
     public function __construct(string $appKey) {
         $this->appKey = $appKey;
-
-        $this->isIPLimit = Config::get('sys_auth.ip_limit');
-        $this->isApiRate = Config::get('sys_auth.api_rate');
-        $this->isRouteLimit = Config::get('sys_auth.route_limit');
     }
 
     /**
@@ -87,11 +79,18 @@ class AuthApi
      */
     private function IPLimit(AppService $app)
     {
-        if(!$this->isIPLimit) {
+        $status = Config::get('sys_auth.ip_limit.status');
+        $whiteList = Config::get('sys_auth.ip_limit.white_list');
+
+        if(!$status) {
             return;
         }
 
         $ip = IPService::getClientIP();
+
+        if(!empty($whiteList) && in_array($ip, $whiteList)) {
+            return;
+        }
 
         // 白名单模式
         if($app->getIpLimitType() == SysAuthApp::IP_WHITE) {
@@ -123,17 +122,35 @@ class AuthApi
     }
 
     /**
-     * @param AppService $app
-     * @return void
      * @throws ErrCodeException
      */
     private function ApiRate(AppService $app)
     {
-        if(!$this->isApiRate) {
+        $status = Config::get('sys_auth.api_rate.status');
+        $eval = Config::get('sys_auth.api_rate.eval');
+        $rateType = Config::get('sys_auth.api_rate.rate_type');
+
+        if(!$status) {
             return;
         }
 
-        (new RateLimiterService($app->getApiLimit()))->throttle($app->getAppKey());
+        // 配置文件错误
+        if(!in_array($rateType, RateLimiterService::RateType)) {
+            throw new ErrCodeException('Error in configuration file [sys_auth.api_rate.rate_type]',
+                ErrCodeEnums::ERR_CONF_FAILED);
+        }
+
+        $method = $rateType;
+        if($eval) {
+            $method .= 'Eval';
+        }
+
+        if(!method_exists(RateLimiterService::class, $method)) {
+            throw new ErrCodeException('Error in configuration file [sys_auth.api_rate]',
+                ErrCodeEnums::ERR_CONF_FAILED);
+        }
+
+        (new RateLimiterService($app->getApiLimit()))->$method($app->getAppKey());
     }
 
     /**
@@ -141,11 +158,18 @@ class AuthApi
      */
     private function RouteLimit(AppService $app, $exp)
     {
-        if(!$this->isRouteLimit) {
+        $status = Config::get('sys_auth.route_limit.status');
+        $whiteList = Config::get('sys_auth.route_limit.white_list');
+
+        if(!$status) {
             return;
         }
 
         $uri = request()->route()->uri;
+        if(!empty($whiteList) && in_array($uri, $whiteList)) {
+            return;
+        }
+
         $route = (new AppRouteService())->getRouteList($app->getAppID(), $app->getAppKey(), $exp);
         if(!in_array(strtolower($uri), $route)) {
             throw new ErrCodeException('The interface you requested is not authorized', ErrCodeEnums::ERR_URI_UNAUTHORIZED);
