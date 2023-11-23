@@ -79,23 +79,22 @@ class JWTHandler {
     {
         $cache = BaseCache::getInstance();
 
-        $authCacheKey = sprintf('auth:app:%s', $appKey);
-        $signCacheKey = sprintf('auth:app_sign:%s', $signature);
-        if(!$cache->exists($authCacheKey)) {
-            $cache->setex($authCacheKey, $exp, $signature);
-            $cache->setex($signCacheKey, $exp, $appKey);
-        }
+        $authKey = sprintf('auth:app:%s', $appKey);
+        $expKey = sprintf('auth:appExp:%s', $appKey);
 
-        $cacheSign = $cache->get($authCacheKey);
-        if($cacheSign == $signature) {
-            return;
-        }
-
-        if($cache->exists($signCacheKey)) {
+        if($cache->sismember($expKey, $signature)) {
             throw new TokenInvalidException('Token verification expire', ErrCodeEnums::ERR_TOKEN_EXP);
         }
 
-        throw new TokenInvalidException('Token verification failed', ErrCodeEnums::ERR_TOKEN_FAILED);
+        $cacheSign = $cache->get($authKey);
+        if($cacheSign && $cacheSign != $signature) {
+            $cache->sadd($expKey, $cacheSign);
+            $cache->expire($expKey, $exp);
+        }
+
+        if($cacheSign != $signature) {
+            $cache->setex($authKey, $exp, $signature);
+        }
     }
 
     private function base64UrlEncode($data)
