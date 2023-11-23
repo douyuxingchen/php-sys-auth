@@ -38,13 +38,13 @@ class AppService
         $data = SysAuthApp::findByAppKey($appKey);
         if(empty($data)) {
             if($isCache) {
-                $cache->set(self::cacheKey($appKey), self::CACHE_SEAT,'EX', 5);
+                $cache->setex(self::cacheKey($appKey), 5, self::CACHE_SEAT);
             }
             throw new ValidationException('AppKey not present or invalid', ErrCodeEnums::ERR_APP_KEY_EMPTY);
         }
 
         if($isCache) {
-            $cache->set(self::cacheKey($appKey), json_encode($data),'EX', $exp);
+            $cache->setex(self::cacheKey($appKey), $exp, json_encode($data));
         }
 
         $this->appData = $data->toArray();
