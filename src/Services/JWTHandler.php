@@ -82,8 +82,8 @@ class JWTHandler {
         $authCacheKey = sprintf('auth:app:%s', $appKey);
         $signCacheKey = sprintf('auth:app_sign:%s', $signature);
         if(!$cache->exists($authCacheKey)) {
-            $cache->set($authCacheKey, $signature, 'EX', $exp);
-            $cache->set($signCacheKey, $appKey, 'EX', $exp);
+            $cache->setex($authCacheKey, $exp, $signature);
+            $cache->setex($signCacheKey, $exp, $appKey);
         }
 
         $cacheSign = $cache->get($authCacheKey);

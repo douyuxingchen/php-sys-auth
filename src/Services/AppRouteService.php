@@ -44,7 +44,7 @@ class AppRouteService
         }
 
         if($isCache) {
-            $cache->set(self::cacheKey($appKey), json_encode($routes), 'EX', $exp);
+            $cache->setex(self::cacheKey($appKey), $exp, json_encode($routes));
         }
 
         return $routes;

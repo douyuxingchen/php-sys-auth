@@ -97,8 +97,7 @@ class AuthApi
         }
 
         $jwt = new JWTHandler($app->getSecretKey());
-        $payload = $jwt->verifyToken($this->appKey, $this->token, $this->tokenCache);
-        // $exp = (int)$payload['exp'];
+        $jwt->verifyToken($this->appKey, $this->token, $this->tokenCache);
 
         $this->IPLimit($app); // 黑白ip限流
         $this->ApiRate($app);  // 频率限流
