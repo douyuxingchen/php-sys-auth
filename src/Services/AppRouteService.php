@@ -5,14 +5,22 @@ namespace Douyuxingchen\PhpSysAuth\Services;
 use Douyuxingchen\PhpSysAuth\Caches\BaseCache;
 use Douyuxingchen\PhpSysAuth\Models\SysAuthApi;
 use Douyuxingchen\PhpSysAuth\Models\SysAuthAppRoute;
+use Illuminate\Support\Facades\Config;
 
 class AppRouteService
 {
+    const CACHE_EXP = 3600;
 
-    public function getRouteList($appID, $appKey, $exp)
+    public function getRouteList($appID, $appKey)
     {
+        $isCache = (bool)Config::get('sys_auth.app.cache');
+        $exp = (int)Config::get('sys_auth.app.exp');
+        if(!$exp) {
+            $exp = self::CACHE_EXP;
+        }
+
         $cache = BaseCache::getInstance();
-        if($cache->exists(self::cacheKey($appKey))) {
+        if($isCache && $cache->exists(self::cacheKey($appKey))) {
             return json_decode($cache->get(self::cacheKey($appKey)), true);
         }
 
@@ -34,7 +42,10 @@ class AppRouteService
         foreach ($routes as $k => $v) {
             $routes[$k] = strtolower($v);
         }
-        $cache->set(self::cacheKey($appKey), json_encode($routes), 'EX', $exp);
+
+        if($isCache) {
+            $cache->set(self::cacheKey($appKey), json_encode($routes), 'EX', $exp);
+        }
 
         return $routes;
     }

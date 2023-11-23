@@ -102,6 +102,29 @@ Route::middleware('api.sys.auth')->group(function () {
 });
 ```
 
+## 注意事项
+
+### AppKey和AppSecret生成
+关于`app_key`和`secret_key`的申请，该SDK提供了生成方法，请请求如下方法生成
+```php
+// 生成AppKey
+Douyuxingchen\PhpSysAuth\Auth\AuthKey::genAppKey();
+// 生成 AppSecret
+Douyuxingchen\PhpSysAuth\Auth\AuthKey::genAppSecret();
+```
+
+### Token生成
+在开发阶段，需要进行Token生成进行测试，你可以使用以下代码进行Token生成
+```php
+(new AuthApi('your_app_key'))->token('your_app_secret', ['exp'=>86400]);
+```
+
+### App缓存清理
+如果您对App应用进行了配置修改，例如：黑白名单、IP更改、限流更改、接口白名单。那么您通常需要调用`flushCache`方法进行缓存清理。
+```php
+(new AuthApi('your_app_key'))->flushCache();
+```
+
 ## 使用指南
 请参阅我们的完整[文档](docs)以了解如何使用此库等更多详细信息。
 

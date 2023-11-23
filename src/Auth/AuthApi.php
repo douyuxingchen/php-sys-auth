@@ -18,6 +18,7 @@ class AuthApi
 {
     private $appKey;
     private $token;
+    private $tokenCache = true;
 
     /**
      * @param string $appKey 应用key
@@ -27,12 +28,26 @@ class AuthApi
     }
 
     /**
+     * 设置Token
+     *
      * @param string $token 请求token
      * @return $this
      */
     public function setToken(string $token) : AuthApi
     {
         $this->token = $token;
+        return $this;
+    }
+
+    /**
+     * 是否使用Token缓存
+     *
+     * @param bool $status
+     * @return $this
+     */
+    public function setTokenCache(bool $status) : AuthApi
+    {
+        $this->tokenCache = $status;
         return $this;
     }
 
@@ -50,7 +65,21 @@ class AuthApi
     }
 
     /**
-     * 接口安全验证器
+     * 接口Token生成
+     *
+     * @param string $appSecret
+     * @param array $payload
+     * @return string
+     * @throws ValidationException
+     */
+    public function token(string $appSecret, array $payload)
+    {
+        $jwt = new JWTHandler($appSecret);
+        return $jwt->generateToken($payload);
+    }
+
+    /**
+     * 接口安全验证
      *
      * @return void
      * @throws TokenInvalidException
@@ -68,12 +97,12 @@ class AuthApi
         }
 
         $jwt = new JWTHandler($app->getSecretKey());
-        $payload = $jwt->verifyToken($this->appKey, $this->token);
-        $exp = (int)$payload['exp'];
+        $payload = $jwt->verifyToken($this->appKey, $this->token, $this->tokenCache);
+        // $exp = (int)$payload['exp'];
 
         $this->IPLimit($app); // 黑白ip限流
         $this->ApiRate($app);  // 频率限流
-        $this->RouteLimit($app, $exp); // 接口白名单限流
+        $this->RouteLimit($app); // 接口白名单限流
     }
 
     /**
@@ -158,7 +187,7 @@ class AuthApi
     /**
      * @throws ErrCodeException
      */
-    private function RouteLimit(AppService $app, $exp)
+    private function RouteLimit(AppService $app)
     {
         $status = Config::get('sys_auth.route_limit.status');
         $whiteList = Config::get('sys_auth.route_limit.white_list');
@@ -172,7 +201,7 @@ class AuthApi
             return;
         }
 
-        $route = (new AppRouteService())->getRouteList($app->getAppID(), $app->getAppKey(), $exp);
+        $route = (new AppRouteService())->getRouteList($app->getAppID(), $app->getAppKey());
         if(!in_array(strtolower($uri), $route)) {
             throw new ErrCodeException(sprintf('The interface you requested is not authorized [%s]', $uri), ErrCodeEnums::ERR_URI_UNAUTHORIZED);
         }
