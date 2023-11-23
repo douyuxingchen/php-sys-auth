@@ -116,7 +116,7 @@ Douyuxingchen\PhpSysAuth\Auth\AuthKey::genAppSecret();
 ### Token生成
 在开发阶段，需要进行Token生成进行测试，你可以使用以下代码进行Token生成
 ```php
-(new AuthApi('your_app_key'))->token('your_app_secret', ['exp'=>86400]);
+(new AuthApi('your_app_key'))->token('your_app_secret', ['exp'=>86400,'timestamp' => time()]);
 ```
 
 ### App缓存清理
