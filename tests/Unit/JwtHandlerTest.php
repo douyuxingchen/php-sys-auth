@@ -37,7 +37,8 @@ class JwtHandlerTest extends TestCase
      */
     public function testVerifyToken()
     {
-         $appSecret = 'test_secret';
+        $appKey = 'testapp';
+        $appSecret = 'test_secret';
         $payload = [
             'app_key' => 'testapp',
             'exp' => 500
@@ -45,7 +46,7 @@ class JwtHandlerTest extends TestCase
         $jwt = new JWTHandler($appSecret);
         $token = $jwt->generateToken($payload);
 
-        $data = $jwt->verifyToken($token);
+        $data = $jwt->verifyToken($appKey, $token);
         var_dump($data);
 
         $this->assertEquals($data['app_key'], 'testapp');

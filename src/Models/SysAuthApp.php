@@ -16,4 +16,10 @@ class SysAuthApp extends BaseModel
     // IP限制模型
     const IP_WHITE = 0; // 白名单
     const IP_BLACK = 1; // 黑名单
+
+
+    public static function findByAppKey(string $appKey)
+    {
+        return self::query()->where('app_key', $appKey)->first();
+    }
 }

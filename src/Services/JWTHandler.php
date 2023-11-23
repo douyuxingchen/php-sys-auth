@@ -20,9 +20,6 @@ class JWTHandler {
      * @throws ValidationException
      */
     public function generateToken(array $payload) {
-        if(!isset($payload['app_key'])) {
-            throw new ValidationException('Payload did not find app_key');
-        }
         if(!isset($payload['exp'])) {
             throw new ValidationException('Payload did not find exp');
         }
@@ -43,7 +40,7 @@ class JWTHandler {
      *
      * @throws ValidationException|TokenInvalidException
      */
-    public function verifyToken($appKey, $token) {
+    public function verifyToken($appKey, $token, $isCache = true) {
         $tokenParts = explode('.', $token);
         if (count($tokenParts) !== 3) {
             throw new ValidationException('Token format incorrect', ErrCodeEnums::ERR_TOKEN_DELETION);
@@ -56,19 +53,16 @@ class JWTHandler {
         }
         $payloadData = json_decode($this->base64UrlDecode($tokenParts[1]), true);
 
-        if(!isset($payloadData['app_key'])) {
-            throw new ValidationException('Payload did not find app_key', ErrCodeEnums::ERR_TOKEN_APP_KEY_EMPTY);
-        }
         if(!isset($payloadData['exp'])) {
             throw new ValidationException('Payload did not find exp', ErrCodeEnums::ERR_TOKEN_EXP_EMPTY);
-        }
-        if($appKey != $payloadData['app_key']) {
-            throw new ValidationException('The passed appKey and encrypted appKey data are inconsistent', ErrCodeEnums::ERR_TOKEN_APP_KEY_NOT_MATCH);
         }
         if((int)$payloadData['exp'] > 86400) {
             throw new ValidationException('The expiration time cannot exceed 24 hours', ErrCodeEnums::ERR_TOKEN_EXP_NOT_24_HOUR);
         }
-        $this->verifyTokenExpire($appKey, $calculatedSignature, (int)$payloadData['exp']);
+        if($isCache) {
+            $this->verifyTokenExpire($appKey, $calculatedSignature, (int)$payloadData['exp']);
+        }
+        
         return $payloadData;
     }
 
